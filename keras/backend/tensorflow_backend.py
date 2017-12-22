@@ -2338,11 +2338,11 @@ def set_value(x, value):
 
 def batch_set_value(tuples):
     """Sets the values of many tensor variables at once.
-
     # Arguments
         tuples: a list of tuples `(tensor, value)`.
             `value` should be a Numpy array.
     """
+    #TODO(DingYu95) make changes here
     if tuples:
         assign_ops = []
         feed_dict = {}

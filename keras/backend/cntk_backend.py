@@ -2046,6 +2046,7 @@ def print_tensor(x, message=''):
 
 
 def batch_set_value(tuples):
+    #TODO(DingYu95) make changes here
     for t in tuples:
         x = t[0]
         value = t[1]

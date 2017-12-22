@@ -2625,6 +2625,7 @@ class Container(Layer):
         # Raises
             ImportError: If h5py is not available.
         """
+    #TODO(DingYu95) make changes here
         if h5py is None:
             raise ImportError('`load_weights` requires h5py.')
         f = h5py.File(filepath, mode='r')
@@ -2857,6 +2858,7 @@ def _collect_input_shape(input_tensors):
 def save_weights_to_hdf5_group(f, layers):
     from .. import __version__ as keras_version
 
+    #TODO(DingYu95) make changes here
     f.attrs['layer_names'] = [layer.name.encode('utf8') for layer in layers]
     f.attrs['backend'] = K.backend().encode('utf8')
     f.attrs['keras_version'] = str(keras_version).encode('utf8')
@@ -2897,7 +2899,7 @@ def preprocess_weights_for_loading(layer, weights,
 
     # Returns
         A list of weights values (Numpy arrays).
-    """
+    """    #TODO(DingYu95) make changes here
     if original_keras_version == '1':
         if layer.__class__.__name__ == 'Bidirectional':
             num_weights_per_layer = len(weights) // 2
@@ -3038,7 +3040,14 @@ def preprocess_weights_for_loading(layer, weights,
             weights[0] = conv_utils.convert_kernel(weights[0])
             if layer.__class__.__name__ == 'ConvLSTM2D':
                 weights[1] = conv_utils.convert_kernel(weights[1])
+        layer_weights_shape = K.int_shape(K.squeeze(layer.weights[0]))
+        weights_shape = np.squeeze(weights[0]).shape
+        for (lws, ws) in six.iteritems.zip_longest(layer_weights_shape, weights_shape):
+        #
+        squeeze_equivalent = all([ for  ])
+        if reshape == True and layer_weights_shape == layer_weights_shape:
         if K.int_shape(layer.weights[0]) != weights[0].shape:
+            print('layer_weights shape:',  K.int_shape(layer.weights[0]), '\n file weights shape:', weights[0].shape)
             weights[0] = np.transpose(weights[0], (3, 2, 0, 1))
             if layer.__class__.__name__ == 'ConvLSTM2D':
                 weights[1] = np.transpose(weights[1], (3, 2, 0, 1))
@@ -3101,6 +3110,7 @@ def load_weights_from_hdf5_group(f, layers):
         ValueError: in case of mismatch between provided layers
             and weights file.
     """
+    #TODO(DingYu95) make changes here
     if 'keras_version' in f.attrs:
         original_keras_version = f.attrs['keras_version'].decode('utf8')
     else:

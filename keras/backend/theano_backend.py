@@ -1186,6 +1186,7 @@ def set_value(x, value):
 
 
 def batch_set_value(tuples):
+    #TODO(DingYu95) make changes here
     for x, value in tuples:
         x.set_value(np.asarray(value, dtype=x.dtype))
 

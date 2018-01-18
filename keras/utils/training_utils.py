@@ -42,8 +42,14 @@ def multi_gpu_model(model, gpus):
             list of GPU IDs on which to create model replicas.
 
     # Returns
+
+        [model, gpu_compute_stage_ops]
+
         A Keras `Model` instance which can be used just like the initial
         `model` argument, but which distributes its workload on multiple GPUs.
+
+        gpu_compute_stage_ops which are to be passed as the `updates` parameter
+        of model.fit(), this pipelines data loading for increased throughput.
 
     # Example
 
@@ -70,7 +76,7 @@ def multi_gpu_model(model, gpus):
 
         # Replicates the model on 8 GPUs.
         # This assumes that your machine has 8 available GPUs.
-        parallel_model = multi_gpu_model(model, gpus=8)
+        parallel_model, gpu_compute_stage_ops = multi_gpu_model(model, gpus=8)
         parallel_model.compile(loss='categorical_crossentropy',
                                optimizer='rmsprop')
 
@@ -80,7 +86,7 @@ def multi_gpu_model(model, gpus):
 
         # This `fit` call will be distributed on 8 GPUs.
         # Since the batch size is 256, each GPU will process 32 samples.
-        parallel_model.fit(x, y, epochs=20, batch_size=256)
+        parallel_model.fit(x, y, epochs=20, batch_size=256, updates=gpu_compute_stage_ops)
 
         # Save model via the template model (which shares the same weights):
         model.save('my_model.h5')
@@ -145,10 +151,13 @@ def multi_gpu_model(model, gpus):
 
     # Place a copy of the model on each GPU,
     # each getting a slice of the inputs.
+    gpu_compute_stage_ops = []
     for i, gpu_id in enumerate(target_gpu_ids):
         with tf.device('/gpu:%d' % gpu_id):
             with tf.name_scope('replica_%d' % gpu_id):
                 inputs = []
+                input_shapes = []
+                input_dtypes = []
                 # Retrieve a slice of the input.
                 for x in model.inputs:
                     input_shape = tuple(x.get_shape().as_list())[1:]
@@ -157,7 +166,16 @@ def multi_gpu_model(model, gpus):
                                      arguments={'i': i,
                                                 'parts': num_gpus})(x)
                     inputs.append(slice_i)
+                    input_shapes.append(input_shape)
+                    input_dtypes.append(K.dtype(slice_i))
 
+                gpu_compute_stage = data_flow_ops.StagingArea(
+                    input_dtypes,
+                    shapes=input_shapes)
+                # The CPU-to-GPU copy is triggered here.
+                gpu_compute_stage_op = gpu_compute_stage.put(inputs)
+                inputs = gpu_compute_stage.get()
+                gpu_compute_stage_ops.append(gpu_compute_stage_op)
                 # Apply model on slice
                 # (creating a model replica on the target device).
                 outputs = model(inputs)
@@ -174,4 +192,4 @@ def multi_gpu_model(model, gpus):
         for name, outputs in zip(model.output_names, all_outputs):
             merged.append(concatenate(outputs,
                                       axis=0, name=name))
-        return Model(model.inputs, merged)
+        return Model(model.inputs, merged), gpu_compute_stage_ops

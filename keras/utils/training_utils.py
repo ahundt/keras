@@ -169,7 +169,7 @@ def multi_gpu_model(model, gpus):
                     input_shapes.append(input_shape)
                     input_dtypes.append(K.dtype(slice_i))
 
-                gpu_compute_stage = data_flow_ops.StagingArea(
+                gpu_compute_stage = tf.contrib.staging.StagingArea(
                     input_dtypes,
                     shapes=input_shapes)
                 # The CPU-to-GPU copy is triggered here.

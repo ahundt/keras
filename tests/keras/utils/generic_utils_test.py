@@ -21,9 +21,8 @@ def test_progbar():
     for target in (len(values_s) - 1, None):
         for verbose in (0, 1, 2):
             bar = Progbar(target, width=30, verbose=verbose, interval=0.05)
-            for force in (False, True):
-                for current, values in enumerate(values_s):
-                    bar.update(current, values=values, force=force)
+            for current, values in enumerate(values_s):
+                bar.update(current, values=values)
 
 
 def test_custom_objects_scope():
@@ -121,7 +120,7 @@ def test_func_dump_and_load_closure():
 
 
 @pytest.mark.parametrize(
-    'test_func', [activations.softmax, np.argmax, lambda x: x**2])
+    'test_func', [activations.softmax, np.argmax, lambda x: x**2, lambda x: x])
 def test_func_dump_and_load_backwards_compat(test_func):
     # this test ensures that models serialized prior to version 2.1.2 can still be
     # deserialized
